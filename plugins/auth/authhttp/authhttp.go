@@ -1,17 +1,15 @@
 package authhttp
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
+	"github.com/fhmq/hmq/logger"
+	"go.uber.org/zap"
 	"io"
 	"io/ioutil"
 	"net/http"
-	"net/url"
-	"strconv"
-	"strings"
 	"time"
-
-	"github.com/fhmq/hmq/logger"
-	"go.uber.org/zap"
 )
 
 //Config device kafka config
@@ -57,7 +55,7 @@ func Init() *authHTTP {
 }
 
 //CheckAuth check mqtt connect
-func (a *authHTTP) CheckConnect(clientID, username, password string) bool {
+func (a *authHTTP) CheckConnect(clientID, username, password, ip string) bool {
 	action := "connect"
 	{
 		aCache := checkCache(action, clientID, username, password, "")
@@ -68,25 +66,17 @@ func (a *authHTTP) CheckConnect(clientID, username, password string) bool {
 		}
 	}
 
-	data := url.Values{}
-	data.Add("username", username)
-	data.Add("clientid", clientID)
-	data.Add("password", password)
-
-	req, err := http.NewRequest("POST", config.AuthURL, strings.NewReader(data.Encode()))
+	data := make(map[string] string,3)
+	data["username"] = username
+	data["clientid"] = clientID
+	data["password"] = password
+	data["ip"] = ip
+	jData,_ := json.Marshal(data)
+	resp,err := HttpPost(jData,config.AuthURL)
 	if err != nil {
 		log.Error("new request super: ", zap.Error(err))
 		return false
 	}
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
-
-	resp, err := a.client.Do(req)
-	if err != nil {
-		log.Error("request super: ", zap.Error(err))
-		return false
-	}
-
 	defer resp.Body.Close()
 	io.Copy(ioutil.Discard, resp.Body)
 	if resp.StatusCode == http.StatusOK {
@@ -149,25 +139,19 @@ func (a *authHTTP) CheckACL(action, clientID, username, ip, topic string) bool {
 		}
 	}
 
-	req, err := http.NewRequest("GET", config.ACLURL, nil)
+
+	data := make(map[string] string,3)
+	data["username"] = username
+	data["clientid"] = clientID
+	data["topic"] = topic
+	data["access"] = action
+	data["ip"] = ip
+	jData,_ := json.Marshal(data)
+	resp,err := HttpPost(jData,config.ACLURL)
 	if err != nil {
-		log.Error("get acl: ", zap.Error(err))
+		log.Error("new request super: ", zap.Error(err))
 		return false
 	}
-
-	data := req.URL.Query()
-
-	data.Add("username", username)
-	data.Add("topic", topic)
-	data.Add("access", action)
-	req.URL.RawQuery = data.Encode()
-	// fmt.Println("req:", req)
-	resp, err := a.client.Do(req)
-	if err != nil {
-		log.Error("request acl: ", zap.Error(err))
-		return false
-	}
-
 	defer resp.Body.Close()
 	io.Copy(ioutil.Discard, resp.Body)
 
@@ -176,4 +160,21 @@ func (a *authHTTP) CheckACL(action, clientID, username, ip, topic string) bool {
 		return true
 	}
 	return false
+}
+
+
+func HttpPost(data []byte, url string) (*http.Response,error){
+
+	request, err := http.NewRequest("POST", url,bytes.NewReader(data) )
+	if err != nil {
+		return nil,err
+	}
+	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
+	client := http.Client{}
+	resp, err := client.Do(request)
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil,err
+	}
+	return resp,nil
 }

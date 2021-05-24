@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	SUB      = "1"
-	PUB      = "2"
-	PUBSUB   = "3"
+	SUB      = "sub"
+	PUB      = "pub"
+	PUBSUB   = "pubsub"
 	CLIENTID = "clientid"
 	USERNAME = "username"
 	IP       = "ip"

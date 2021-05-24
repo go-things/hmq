@@ -30,9 +30,9 @@ func (b *Broker) CheckTopicAuth(action, clientID, username, ip, topic string) bo
 
 }
 
-func (b *Broker) CheckConnectAuth(clientID, username, password string) bool {
+func (b *Broker) CheckConnectAuth(clientID, username, password,ip string) bool {
 	if b.auth != nil {
-		return b.auth.CheckConnect(clientID, username, password)
+		return b.auth.CheckConnect(clientID, username, password,ip)
 	}
 
 	return true

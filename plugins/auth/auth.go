@@ -12,7 +12,7 @@ const (
 
 type Auth interface {
 	CheckACL(action, clientID, username, ip, topic string) bool
-	CheckConnect(clientID, username, password string) bool
+	CheckConnect(clientID, username, password,ip string) bool
 }
 
 func NewAuth(name string) Auth {

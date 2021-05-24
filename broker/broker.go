@@ -84,12 +84,13 @@ func NewBroker(config *Config) (*Broker, error) {
 	}
 
 	if b.config.TlsPort != "" {
-		tlsconfig, err := NewTLSConfig(b.config.TlsInfo)
-		if err != nil {
-			log.Error("new tlsConfig error", zap.Error(err))
-			return nil, err
-		}
-		b.tlsConfig = tlsconfig
+		//tlsconfig, err := NewTLSConfig(b.config.TlsInfo)
+		//if err != nil {
+		//	log.Error("new tlsConfig error", zap.Error(err))
+		//	return nil, err
+		//}
+		//b.tlsConfig = tlsconfig
+		b.tlsConfig = GenerateTLSConfig()
 	}
 
 	b.auth = b.config.Plugin.Auth
@@ -287,7 +288,7 @@ func (b *Broker) handleConnection(typ int, conn net.Conn) {
 		return
 	}
 
-	if typ == CLIENT && !b.CheckConnectAuth(string(msg.ClientIdentifier), string(msg.Username), string(msg.Password)) {
+	if typ == CLIENT && !b.CheckConnectAuth(string(msg.ClientIdentifier), string(msg.Username), string(msg.Password)，conn.RemoteAddr().String()) {
 		connack.ReturnCode = packets.ErrRefusedNotAuthorised
 		err = connack.Write(conn)
 		if err != nil {

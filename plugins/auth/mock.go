@@ -6,6 +6,6 @@ func (m *mockAuth) CheckACL(action, clientID, username, ip, topic string) bool {
 	return true
 }
 
-func (m *mockAuth) CheckConnect(clientID, username, password string) bool {
+func (m *mockAuth) CheckConnect(clientID, username, password, ip string) bool {
 	return true
 }

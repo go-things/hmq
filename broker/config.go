@@ -1,13 +1,17 @@
 package broker
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"math/big"
 	"os"
 
 	"github.com/fhmq/hmq/logger"
@@ -206,41 +210,64 @@ func (config *Config) check() error {
 	return nil
 }
 
+func GenerateTLSConfig() *tls.Config {
+	key, err := rsa.GenerateKey(rand.Reader, 1024)
+	if err != nil {
+		panic(err)
+	}
+	template := x509.Certificate{SerialNumber: big.NewInt(1)}
+	certDER, err := x509.CreateCertificate(rand.Reader, &template, &template, &key.PublicKey, key)
+	if err != nil {
+		panic(err)
+	}
+	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
+	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER})
+
+	tlsCert, err := tls.X509KeyPair(certPEM, keyPEM)
+	if err != nil {
+		panic(err)
+	}
+	return &tls.Config{Certificates: []tls.Certificate{tlsCert}}
+}
+
 func NewTLSConfig(tlsInfo TLSInfo) (*tls.Config, error) {
 
 	cert, err := tls.LoadX509KeyPair(tlsInfo.CertFile, tlsInfo.KeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing X509 certificate/key pair: %v", zap.Error(err))
 	}
-	cert.Leaf, err = x509.ParseCertificate(cert.Certificate[0])
-	if err != nil {
-		return nil, fmt.Errorf("error parsing certificate: %v", zap.Error(err))
-	}
+	//cert.Leaf, err = x509.ParseCertificate(cert.Certificate[0])
+	//if err != nil {
+	//	return nil, fmt.Errorf("error parsing certificate: %v", zap.Error(err))
+	//}
 
 	// Create TLSConfig
 	// We will determine the cipher suites that we prefer.
 	config := tls.Config{
 		Certificates: []tls.Certificate{cert},
-		MinVersion:   tls.VersionTLS12,
+		//MinVersion:   tls.VersionTLS12,
 	}
 
 	// Require client certificates as needed
-	if tlsInfo.Verify {
-		config.ClientAuth = tls.RequireAndVerifyClientCert
-	}
+	//if tlsInfo.Verify {
+	//	config.ClientAuth = tls.RequireAndVerifyClientCert
+	//} else {
+	//	config.ClientAuth = tls.NoClientCert
+	//}
+	//config.InsecureSkipVerify = true
 	// Add in CAs if applicable.
-	if tlsInfo.CaFile != "" {
-		rootPEM, err := ioutil.ReadFile(tlsInfo.CaFile)
-		if err != nil || rootPEM == nil {
-			return nil, err
-		}
-		pool := x509.NewCertPool()
-		ok := pool.AppendCertsFromPEM([]byte(rootPEM))
-		if !ok {
-			return nil, fmt.Errorf("failed to parse root ca certificate")
-		}
-		config.ClientCAs = pool
-	}
+	//if tlsInfo.CaFile != "" && false {
+	//	rootPEM, err := ioutil.ReadFile(tlsInfo.CaFile)
+	//	if err != nil || rootPEM == nil {
+	//		return nil, err
+	//	}
+	//	pool := x509.NewCertPool()
+	//	ok := pool.AppendCertsFromPEM([]byte(rootPEM))
+	//	if !ok {
+	//		return nil, fmt.Errorf("failed to parse root ca certificate")
+	//	}
+	//	config.ClientCAs = pool
+	//}
 
 	return &config, nil
 }

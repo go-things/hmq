@@ -14,7 +14,7 @@ func Init() *aclAuth {
 	}
 }
 
-func (a *aclAuth) CheckConnect(clientID, username, password string) bool {
+func (a *aclAuth) CheckConnect(clientID, username, password, ip string) bool {
 	return true
 }
 
