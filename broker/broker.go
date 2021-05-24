@@ -8,15 +8,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fhmq/hmq/plugins/bridge"
+	"gitee.com/godLei6/hmq/plugins/bridge"
 
-	"github.com/fhmq/hmq/plugins/auth"
+	"gitee.com/godLei6/hmq/plugins/auth"
 
-	"github.com/fhmq/hmq/broker/lib/sessions"
-	"github.com/fhmq/hmq/broker/lib/topics"
+	"gitee.com/godLei6/hmq/broker/lib/sessions"
+	"gitee.com/godLei6/hmq/broker/lib/topics"
 
 	"github.com/eclipse/paho.mqtt.golang/packets"
-	"github.com/fhmq/hmq/pool"
+	"gitee.com/godLei6/hmq/pool"
 	"go.uber.org/zap"
 	"golang.org/x/net/websocket"
 )
@@ -288,7 +288,7 @@ func (b *Broker) handleConnection(typ int, conn net.Conn) {
 		return
 	}
 
-	if typ == CLIENT && !b.CheckConnectAuth(string(msg.ClientIdentifier), string(msg.Username), string(msg.Password)，conn.RemoteAddr().String()) {
+	if typ == CLIENT && !b.CheckConnectAuth(string(msg.ClientIdentifier), string(msg.Username), string(msg.Password),conn.RemoteAddr().String()) {
 		connack.ReturnCode = packets.ErrRefusedNotAuthorised
 		err = connack.Write(conn)
 		if err != nil {

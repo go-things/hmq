@@ -14,9 +14,9 @@ import (
 	"math/big"
 	"os"
 
-	"github.com/fhmq/hmq/logger"
-	"github.com/fhmq/hmq/plugins/auth"
-	"github.com/fhmq/hmq/plugins/bridge"
+	"gitee.com/godLei6/hmq/logger"
+	"gitee.com/godLei6/hmq/plugins/auth"
+	"gitee.com/godLei6/hmq/plugins/bridge"
 	"go.uber.org/zap"
 )
 

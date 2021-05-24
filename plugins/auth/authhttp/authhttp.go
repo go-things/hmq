@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/fhmq/hmq/logger"
+	"gitee.com/godLei6/hmq/logger"
 	"go.uber.org/zap"
 	"io"
 	"io/ioutil"

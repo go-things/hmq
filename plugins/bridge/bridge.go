@@ -1,6 +1,6 @@
 package bridge
 
-import "github.com/fhmq/hmq/logger"
+import "gitee.com/godLei6/hmq/logger"
 
 const (
 	//Connect mqtt connect

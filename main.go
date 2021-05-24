@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"runtime"
 
-	"github.com/fhmq/hmq/broker"
+	"gitee.com/godLei6/hmq/broker"
 )
 
 func main() {
