@@ -1,11 +1,13 @@
 package auth
 
+import "gitee.com/godLei6/hmq/plugins"
+
 type mockAuth struct{}
 
-func (m *mockAuth) CheckACL(action, clientID, username, ip, topic string) bool {
+func (m *mockAuth) CheckACL(plugins.AuthParm) bool {
 	return true
 }
 
-func (m *mockAuth) CheckConnect(clientID, username, password, ip string) bool {
+func (m *mockAuth) CheckConnect(plugins.AuthParm) bool {
 	return true
 }

@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"gitee.com/godLei6/hmq/logger"
-	"github.com/tal-tech/go-zero/zrpc"
+	"gitee.com/godLei6/hmq/plugins"
 	"gitee.com/godLei6/things/src/dmsvr/dmclient"
+	"github.com/tal-tech/go-zero/zrpc"
 	"go.uber.org/zap"
 	"io/ioutil"
 	"time"
@@ -41,14 +42,15 @@ func Init() *authGRPC {
 }
 
 //CheckAuth check mqtt connect
-func (a *authGRPC) CheckConnect(clientID, username, password, ip string) bool {
+func (a *authGRPC) CheckConnect(param plugins.AuthParm) bool {
 	ctx,cancel := context.WithTimeout(context.Background(),time.Minute)
 	defer cancel()
 	_, err := a.LoginAuth(ctx,&dmclient.LoginAuthReq{
-		Username :username, //用户名
-		Password :password, //密码
-		Clientid :clientID, //clientID
-		Ip       :ip,	//访问的ip地址
+		Username :param.Username, //用户名
+		Password :param.Password, //密码
+		Clientid :param.ClientID, //clientID
+		Ip       :param.RemoteIP,	//访问的ip地址
+		Certificate :param.Certificate,
 	})
 	if err != nil {
 		return false
@@ -58,15 +60,15 @@ func (a *authGRPC) CheckConnect(clientID, username, password, ip string) bool {
 
 
 //CheckACL check mqtt connect
-func (a *authGRPC) CheckACL(action, clientID, username, ip, topic string) bool {
+func (a *authGRPC) CheckACL(param plugins.AuthParm) bool {
 	ctx,cancel := context.WithTimeout(context.Background(),time.Minute)
 	defer cancel()
 	_, err := a.AccessAuth(ctx,&dmclient.AccessAuthReq{
-		Username :username, //用户名
-		Topic    :topic,  	//主题
-		ClientID :clientID,  	//clientID
-		Access   :action,	//操作
-		Ip       :ip,	//访问的ip地址
+		Username :param.Username, 	//用户名
+		Topic    :param.Topic,  	//主题
+		ClientID :param.ClientID,  	//clientID
+		Access   :param.Action,		//操作
+		Ip       :param.RemoteIP,	//访问的ip地址
 	})
 	if err != nil {
 		return false

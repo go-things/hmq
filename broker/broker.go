@@ -3,6 +3,7 @@ package broker
 import (
 	"crypto/tls"
 	"fmt"
+	"gitee.com/godLei6/hmq/plugins"
 	"net"
 	"net/http"
 	"sync"
@@ -287,8 +288,24 @@ func (b *Broker) handleConnection(typ int, conn net.Conn) {
 		}
 		return
 	}
+	var cert []byte
+	tlsCon,ok := conn.(*tls.Conn)
+	if ok {
+		state := tlsCon.ConnectionState()
+		if state.PeerCertificates != nil&& len(state.PeerCertificates) > 0{
+			cert = state.PeerCertificates[0].Raw
+			fmt.Printf("PeerCertificates=%+v|VerifiedChains=%+v|PeerCertificates22=%+v\n",
+				len(state.PeerCertificates),len(state.VerifiedChains),state.PeerCertificates[0])
+		}
 
-	if typ == CLIENT && !b.CheckConnectAuth(string(msg.ClientIdentifier), string(msg.Username), string(msg.Password),conn.RemoteAddr().String()) {
+	}
+	if typ == CLIENT && !b.CheckConnectAuth(plugins.AuthParm{
+		ClientID: msg.ClientIdentifier,
+		Username: msg.Username,
+		RemoteIP: conn.RemoteAddr().String(),
+		Password: string(msg.Password),
+		Certificate: cert,
+	}) {
 		connack.ReturnCode = packets.ErrRefusedNotAuthorised
 		err = connack.Write(conn)
 		if err != nil {

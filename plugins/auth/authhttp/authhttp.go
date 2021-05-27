@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"gitee.com/godLei6/hmq/logger"
+	"gitee.com/godLei6/hmq/plugins"
 	"go.uber.org/zap"
 	"io"
 	"io/ioutil"
@@ -55,22 +56,22 @@ func Init() *authHTTP {
 }
 
 //CheckAuth check mqtt connect
-func (a *authHTTP) CheckConnect(clientID, username, password, ip string) bool {
+func (a *authHTTP) CheckConnect(param plugins.AuthParm) bool {
 	action := "connect"
 	{
-		aCache := checkCache(action, clientID, username, password, "")
+		aCache := checkCache(action, param.ClientID, param.Username, param.Password, "")
 		if aCache != nil {
-			if aCache.password == password && aCache.username == username && aCache.action == action {
+			if aCache.password == param.Password && aCache.username == param.Username && aCache.action == action {
 				return true
 			}
 		}
 	}
 
 	data := make(map[string] string,3)
-	data["username"] = username
-	data["clientid"] = clientID
-	data["password"] = password
-	data["ip"] = ip
+	data["username"] = param.Username
+	data["clientid"] = param.ClientID
+	data["password"] = param.Password
+	data["ip"] = param.RemoteIP
 	jData,_ := json.Marshal(data)
 	resp,err := HttpPost(jData,config.AuthURL)
 	if err != nil {
@@ -80,7 +81,7 @@ func (a *authHTTP) CheckConnect(clientID, username, password, ip string) bool {
 	defer resp.Body.Close()
 	io.Copy(ioutil.Discard, resp.Body)
 	if resp.StatusCode == http.StatusOK {
-		addCache(action, clientID, username, password, "")
+		addCache(action, param.ClientID, param.Username, param.Password, "")
 		return true
 	}
 
@@ -128,12 +129,12 @@ func (a *authHTTP) CheckConnect(clientID, username, password, ip string) bool {
 // }
 
 //CheckACL check mqtt connect
-func (a *authHTTP) CheckACL(action, clientID, username, ip, topic string) bool {
+func (a *authHTTP) CheckACL(param plugins.AuthParm) bool {
 
 	{
-		aCache := checkCache(action, "", username, "", topic)
+		aCache := checkCache(param.Action, "", param.Username, "", param.Topic)
 		if aCache != nil {
-			if aCache.topic == topic && aCache.action == action {
+			if aCache.topic == param.Topic && aCache.action == param.Action {
 				return true
 			}
 		}
@@ -141,11 +142,11 @@ func (a *authHTTP) CheckACL(action, clientID, username, ip, topic string) bool {
 
 
 	data := make(map[string] string,3)
-	data["username"] = username
-	data["clientid"] = clientID
-	data["topic"] = topic
-	data["access"] = action
-	data["ip"] = ip
+	data["username"] = param.Username
+	data["clientid"] = param.ClientID
+	data["topic"] = param.Topic
+	data["access"] = param.Action
+	data["ip"] = param.RemoteIP
 	jData,_ := json.Marshal(data)
 	resp,err := HttpPost(jData,config.ACLURL)
 	if err != nil {
@@ -156,7 +157,7 @@ func (a *authHTTP) CheckACL(action, clientID, username, ip, topic string) bool {
 	io.Copy(ioutil.Discard, resp.Body)
 
 	if resp.StatusCode == http.StatusOK {
-		addCache(action, "", username, "", topic)
+		addCache(param.Action, "", param.Username, "", param.Topic)
 		return true
 	}
 	return false

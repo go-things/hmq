@@ -1,6 +1,7 @@
 package broker
 
 import (
+	"gitee.com/godLei6/hmq/plugins"
 	"strings"
 )
 
@@ -9,30 +10,30 @@ const (
 	PUB = "2"
 )
 
-func (b *Broker) CheckTopicAuth(action, clientID, username, ip, topic string) bool {
+func (b *Broker) CheckTopicAuth(param plugins.AuthParm) bool {
 	if b.auth != nil {
-		if strings.HasPrefix(topic, "$SYS/broker/connection/clients/") {
+		if strings.HasPrefix(param.Topic, "$SYS/broker/connection/clients/") {
 			return true
 		}
 
-		if strings.HasPrefix(topic, "$share/") && action == SUB {
-			substr := groupCompile.FindStringSubmatch(topic)
+		if strings.HasPrefix(param.Topic, "$share/") && param.Action == SUB {
+			substr := groupCompile.FindStringSubmatch(param.Topic)
 			if len(substr) != 3 {
 				return false
 			}
-			topic = substr[2]
+			param.Topic = substr[2]
 		}
 
-		return b.auth.CheckACL(action, clientID, username, ip, topic)
+		return b.auth.CheckACL(param)
 	}
 
 	return true
 
 }
 
-func (b *Broker) CheckConnectAuth(clientID, username, password,ip string) bool {
+func (b *Broker) CheckConnectAuth(param plugins.AuthParm) bool {
 	if b.auth != nil {
-		return b.auth.CheckConnect(clientID, username, password,ip)
+		return b.auth.CheckConnect(param)
 	}
 
 	return true
