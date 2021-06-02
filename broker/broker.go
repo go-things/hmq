@@ -293,7 +293,7 @@ func (b *Broker) handleConnection(typ int, conn net.Conn) {
 	if ok {
 		state := tlsCon.ConnectionState()
 		if state.PeerCertificates != nil&& len(state.PeerCertificates) > 0{
-			cert = state.PeerCertificates[0].Raw
+			cert = state.PeerCertificates[0].Signature
 			fmt.Printf("PeerCertificates=%+v|VerifiedChains=%+v|PeerCertificates22=%+v\n",
 				len(state.PeerCertificates),len(state.VerifiedChains),state.PeerCertificates[0])
 		}
