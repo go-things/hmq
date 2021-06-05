@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	SUB = "1"
-	PUB = "2"
+	SUB = "SUB"
+	PUB = "PUB"
 )
 
 func (b *Broker) CheckTopicAuth(param plugins.AuthParm) bool {
