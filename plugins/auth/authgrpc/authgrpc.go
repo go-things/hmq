@@ -48,7 +48,7 @@ func (a *authGRPC) CheckConnect(param plugins.AuthParm) bool {
 	_, err := a.LoginAuth(ctx,&dmclient.LoginAuthReq{
 		Username :param.Username, //用户名
 		Password :param.Password, //密码
-		Clientid :param.ClientID, //clientID
+		ClientID :param.ClientID, //clientID
 		Ip       :param.RemoteIP,	//访问的ip地址
 		Certificate :param.Certificate,
 	})
