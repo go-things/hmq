@@ -35,6 +35,14 @@ type Config struct {
 	TlsInfo  TLSInfo   `json:"tlsInfo"`
 	Debug    bool      `json:"debug"`
 	Plugin   Plugins   `json:"plugins"`
+	WhiteList []WhiteList	`json:"whiteList,omitempty"`
+}
+
+type WhiteList struct {
+	Typ   int  `json:"type"`//白名单类型 1:账号 密码   2,ip
+	Username string `json:"username,omitempty"`	//用户名
+	Password string `json:"password,omitempty"`	//密码
+	RemoteIP string `json:"remoteIP,omitempty"`	//ip
 }
 
 type Plugins struct {

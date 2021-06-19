@@ -257,6 +257,10 @@ func (b *Broker) StartClusterListening() {
 	}
 }
 
+func (b *Broker) isAdmin(ap *plugins.AuthParm) {
+	
+}
+
 func (b *Broker) handleConnection(typ int, conn net.Conn) {
 	//process connect packet
 	packet, err := packets.ReadPacket(conn)

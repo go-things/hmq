@@ -1,6 +1,6 @@
 {
     "addr": [
-        "81.68.223.176:9092"
+        "146.56.196.176:9092"
     ],
     "onConnect": "onConnect",
     "onPublish": "onPublish",
