@@ -57,6 +57,7 @@ var (
 
 type client struct {
 	typ            int
+	permission	   int	//账号类型:1:系统白名单,不鉴权不入日志库
 	mu             sync.Mutex
 	broker         *Broker
 	conn           net.Conn
@@ -402,7 +403,7 @@ func (c *client) processClientPublish(packet *packets.PublishPacket) {
 
 	topic := packet.TopicName
 
-	if !c.broker.CheckTopicAuth(plugins.AuthParm{
+	if c.permission == 0 && !c.broker.CheckTopicAuth(plugins.AuthParm{
 		Action: PUB,
 		ClientID: c.info.clientID,
 		Username: c.info.username,
@@ -412,16 +413,18 @@ func (c *client) processClientPublish(packet *packets.PublishPacket) {
 		log.Error("Pub Topics Auth failed, ", zap.String("topic", topic), zap.String("ClientID", c.info.clientID))
 		return
 	}
-
+	if c.permission == 0 {
+		c.broker.Publish(&bridge.Elements{
+			ClientID:  c.info.clientID,
+			Username:  c.info.username,
+			Action:    bridge.Publish,
+			Timestamp: time.Now().Unix(),
+			Payload:   string(packet.Payload),
+			Topic:     topic,
+		})
+	}
 	//publish kafka
-	c.broker.Publish(&bridge.Elements{
-		ClientID:  c.info.clientID,
-		Username:  c.info.username,
-		Action:    bridge.Publish,
-		Timestamp: time.Now().Unix(),
-		Payload:   string(packet.Payload),
-		Topic:     topic,
-	})
+
 
 	switch packet.Qos {
 	case QosAtMostOnce:
@@ -790,12 +793,15 @@ func (c *client) Close() {
 	// c.status = Disconnected
 
 	b := c.broker
-	b.Publish(&bridge.Elements{
-		ClientID:  c.info.clientID,
-		Username:  c.info.username,
-		Action:    bridge.Disconnect,
-		Timestamp: time.Now().Unix(),
-	})
+	if c.permission == 0 {
+		b.Publish(&bridge.Elements{
+			ClientID:  c.info.clientID,
+			Username:  c.info.username,
+			Action:    bridge.Disconnect,
+			Timestamp: time.Now().Unix(),
+		})
+	}
+
 
 	if c.conn != nil {
 		c.conn.Close()

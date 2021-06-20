@@ -39,10 +39,10 @@ type Config struct {
 }
 
 type WhiteList struct {
-	Typ   int  `json:"type"`//白名单类型 1:账号 密码   2,ip
+	Typ   int  `json:"type"`//白名单类型 1:账号+密码+ip   2,ip+用户名
 	Username string `json:"username,omitempty"`	//用户名
 	Password string `json:"password,omitempty"`	//密码
-	RemoteIP string `json:"remoteIP,omitempty"`	//ip
+	RemoteIP string `json:"remoteIP,omitempty"`	//ip 及ip段
 }
 
 type Plugins struct {

@@ -4,8 +4,10 @@ import (
 	"crypto/tls"
 	"fmt"
 	"gitee.com/godLei6/hmq/plugins"
+	"gitee.com/godLei6/things/shared/utils"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -257,8 +259,31 @@ func (b *Broker) StartClusterListening() {
 	}
 }
 
-func (b *Broker) isAdmin(ap *plugins.AuthParm) {
-	
+func (b *Broker) isAdmin(ap plugins.AuthParm) int{
+	witeList := b.config.WhiteList
+	for _,v := range witeList{
+		if v.Username == ap.Username {//是系统白名单账号
+			if v.RemoteIP != "" {
+				if !utils.MatchIP(ap.RemoteIP,v.RemoteIP){
+					return 0
+				}
+			}
+			switch v.Typ {
+			case 1:
+				if v.Password != ap.Password{
+					return 0
+				}
+				return 1
+			case 2:
+				if !utils.MatchIP(ap.RemoteIP,v.RemoteIP){
+					return 0
+				}
+				return 1
+			}
+			return 0
+		}
+	}
+	return 0
 }
 
 func (b *Broker) handleConnection(typ int, conn net.Conn) {
@@ -303,20 +328,32 @@ func (b *Broker) handleConnection(typ int, conn net.Conn) {
 		}
 
 	}
-	if typ == CLIENT && !b.CheckConnectAuth(plugins.AuthParm{
-		ClientID: msg.ClientIdentifier,
-		Username: msg.Username,
-		RemoteIP: conn.RemoteAddr().String(),
-		Password: string(msg.Password),
-		Certificate: cert,
-	}) {
-		connack.ReturnCode = packets.ErrRefusedNotAuthorised
-		err = connack.Write(conn)
-		if err != nil {
-			log.Error("send connack error, ", zap.Error(err), zap.String("clientID", msg.ClientIdentifier))
-			return
+	var RemoteIP string = string([]byte(conn.RemoteAddr().String())[0:strings.LastIndex(conn.RemoteAddr().String(),":")])
+	var permission int = 0
+	if typ == CLIENT  {
+		ap := plugins.AuthParm{
+			ClientID: msg.ClientIdentifier,
+			Username: msg.Username,
+			RemoteIP: RemoteIP,
+			Password: string(msg.Password),
+			Certificate: cert,
 		}
-		return
+		permission = b.isAdmin(ap)
+		if permission > 0 {
+			log.Info(fmt.Sprintf("connect admin|permission=%d|msg=%+v\n",permission,ap))
+		}
+		if permission == 0{
+
+			if !b.CheckConnectAuth(ap) {
+				connack.ReturnCode = packets.ErrRefusedNotAuthorised
+				err = connack.Write(conn)
+				if err != nil {
+					log.Error("send connack error, ", zap.Error(err), zap.String("clientID", msg.ClientIdentifier))
+					return
+				}
+				return
+			}
+		}
 	}
 
 	err = connack.Write(conn)
@@ -341,6 +378,7 @@ func (b *Broker) handleConnection(typ int, conn net.Conn) {
 		password:  msg.Password,
 		keepalive: msg.Keepalive,
 		willMsg:   willmsg,
+		remoteIP: RemoteIP,
 	}
 
 	c := &client{
@@ -348,6 +386,7 @@ func (b *Broker) handleConnection(typ int, conn net.Conn) {
 		broker: b,
 		conn:   conn,
 		info:   info,
+		permission: permission,
 	}
 
 	c.init()
@@ -376,7 +415,7 @@ func (b *Broker) handleConnection(typ int, conn net.Conn) {
 		b.clients.Store(cid, c)
 
 		b.OnlineOfflineNotification(cid, true)
-		{
+		if c.permission == 0{
 			b.Publish(&bridge.Elements{
 				ClientID:  string(msg.ClientIdentifier),
 				Username:  string(msg.Username),
