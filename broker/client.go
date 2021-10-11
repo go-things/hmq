@@ -539,7 +539,7 @@ func (c *client) processClientSubscribe(packet *packets.SubscribePacket) {
 	for i, topic := range topics {
 		t := topic
 		//check topic auth for client
-		if !b.CheckTopicAuth(plugins.AuthParm{
+		if c.permission == 0 && !b.CheckTopicAuth(plugins.AuthParm{
 			Action: SUB,
 			ClientID: c.info.clientID,
 			Username: c.info.username,
@@ -550,14 +550,15 @@ func (c *client) processClientSubscribe(packet *packets.SubscribePacket) {
 			retcodes = append(retcodes, QosFailure)
 			continue
 		}
-
-		b.Publish(&bridge.Elements{
-			ClientID:  c.info.clientID,
-			Username:  c.info.username,
-			Action:    bridge.Subscribe,
-			Timestamp: time.Now().Unix(),
-			Topic:     topic,
-		})
+		if c.permission == 0 {
+			b.Publish(&bridge.Elements{
+				ClientID:  c.info.clientID,
+				Username:  c.info.username,
+				Action:    bridge.Subscribe,
+				Timestamp: time.Now().Unix(),
+				Topic:     topic,
+			})
+		}
 
 		groupName := ""
 		share := false
