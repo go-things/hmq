@@ -17,7 +17,7 @@ require (
 	github.com/tal-tech/go-zero v1.2.1
 	github.com/tidwall/gjson v1.6.8
 	go.uber.org/zap v1.17.0
-	golang.org/x/net v0.0.0-20210716203947-853a461950ff
+	golang.org/x/net v0.0.0-20210726213435-c6fcb2dbf985
 )
 
 replace gitee.com/godLei6/things => ../things

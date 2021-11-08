@@ -3,6 +3,7 @@ package bridge
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"strings"
 	"time"
@@ -98,7 +99,6 @@ func (k *kafka) Publish(e *Elements) error {
 	default:
 		return errors.New("error action: " + e.Action)
 	}
-
 	return k.publish(topics, key, e)
 
 }
@@ -110,6 +110,7 @@ func (k *kafka) publish(topics map[string]bool, key string, msg *Elements) error
 	}
 
 	for topic, _ := range topics {
+		log.Info(fmt.Sprintf("kafka publish topic:%s",topic))
 		select {
 		case k.kafkaClient.Input() <- &sarama.ProducerMessage{
 			Topic: topic,
