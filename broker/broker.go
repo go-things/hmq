@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"gitee.com/godLei6/hmq/plugins"
-	"gitee.com/godLei6/things/shared/utils"
+	"github.com/go-things/things/shared/utils"
 	"net"
 	"net/http"
 	"strings"
@@ -18,8 +18,8 @@ import (
 	"gitee.com/godLei6/hmq/broker/lib/sessions"
 	"gitee.com/godLei6/hmq/broker/lib/topics"
 
-	"github.com/eclipse/paho.mqtt.golang/packets"
 	"gitee.com/godLei6/hmq/pool"
+	"github.com/eclipse/paho.mqtt.golang/packets"
 	"go.uber.org/zap"
 	"golang.org/x/net/websocket"
 )
@@ -259,23 +259,23 @@ func (b *Broker) StartClusterListening() {
 	}
 }
 
-func (b *Broker) isAdmin(ap plugins.AuthParm) int{
+func (b *Broker) isAdmin(ap plugins.AuthParm) int {
 	witeList := b.config.WhiteList
-	for _,v := range witeList{
-		if v.Username == ap.Username {//是系统白名单账号
+	for _, v := range witeList {
+		if v.Username == ap.Username { //是系统白名单账号
 			if v.RemoteIP != "" {
-				if !utils.MatchIP(ap.RemoteIP,v.RemoteIP){
+				if !utils.MatchIP(ap.RemoteIP, v.RemoteIP) {
 					return 0
 				}
 			}
 			switch v.Typ {
 			case 1:
-				if v.Password != ap.Password{
+				if v.Password != ap.Password {
 					return 0
 				}
 				return 1
 			case 2:
-				if !utils.MatchIP(ap.RemoteIP,v.RemoteIP){
+				if !utils.MatchIP(ap.RemoteIP, v.RemoteIP) {
 					return 0
 				}
 				return 1
@@ -318,31 +318,31 @@ func (b *Broker) handleConnection(typ int, conn net.Conn) {
 		return
 	}
 	var cert []byte
-	tlsCon,ok := conn.(*tls.Conn)
+	tlsCon, ok := conn.(*tls.Conn)
 	if ok {
 		state := tlsCon.ConnectionState()
-		if state.PeerCertificates != nil&& len(state.PeerCertificates) > 0{
+		if state.PeerCertificates != nil && len(state.PeerCertificates) > 0 {
 			cert = state.PeerCertificates[0].Signature
 			fmt.Printf("PeerCertificates=%+v|VerifiedChains=%+v|PeerCertificates22=%+v\n",
-				len(state.PeerCertificates),len(state.VerifiedChains),state.PeerCertificates[0])
+				len(state.PeerCertificates), len(state.VerifiedChains), state.PeerCertificates[0])
 		}
 
 	}
-	var RemoteIP string = string([]byte(conn.RemoteAddr().String())[0:strings.LastIndex(conn.RemoteAddr().String(),":")])
+	var RemoteIP string = string([]byte(conn.RemoteAddr().String())[0:strings.LastIndex(conn.RemoteAddr().String(), ":")])
 	var permission int = 0
-	if typ == CLIENT  {
+	if typ == CLIENT {
 		ap := plugins.AuthParm{
-			ClientID: msg.ClientIdentifier,
-			Username: msg.Username,
-			RemoteIP: RemoteIP,
-			Password: string(msg.Password),
+			ClientID:    msg.ClientIdentifier,
+			Username:    msg.Username,
+			RemoteIP:    RemoteIP,
+			Password:    string(msg.Password),
 			Certificate: cert,
 		}
 		permission = b.isAdmin(ap)
 		if permission > 0 {
-			log.Info(fmt.Sprintf("connect admin|permission=%d|msg=%+v\n",permission,ap))
+			log.Info(fmt.Sprintf("connect admin|permission=%d|msg=%+v\n", permission, ap))
 		}
-		if permission == 0{
+		if permission == 0 {
 
 			if !b.CheckConnectAuth(ap) {
 				connack.ReturnCode = packets.ErrRefusedNotAuthorised
@@ -378,14 +378,14 @@ func (b *Broker) handleConnection(typ int, conn net.Conn) {
 		password:  msg.Password,
 		keepalive: msg.Keepalive,
 		willMsg:   willmsg,
-		remoteIP: RemoteIP,
+		remoteIP:  RemoteIP,
 	}
 
 	c := &client{
-		typ:    typ,
-		broker: b,
-		conn:   conn,
-		info:   info,
+		typ:        typ,
+		broker:     b,
+		conn:       conn,
+		info:       info,
 		permission: permission,
 	}
 
@@ -415,7 +415,7 @@ func (b *Broker) handleConnection(typ int, conn net.Conn) {
 		b.clients.Store(cid, c)
 
 		b.OnlineOfflineNotification(cid, true)
-		if c.permission == 0{
+		if c.permission == 0 {
 			b.Publish(&bridge.Elements{
 				ClientID:  string(msg.ClientIdentifier),
 				Username:  string(msg.Username),
